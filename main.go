@@ -8,7 +8,10 @@ import (
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/config"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/handlers"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/logger"
+	custommiddleware "github.com/ComputerSocietyVITC/projects-portal-backend/internal/middleware"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/models"
+	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/repository"
+	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/service"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -58,34 +61,56 @@ func main() {
 			return nil
 		},
 	}))
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodPatch, http.MethodDelete},
+	}))
 
 	e.GET("/", func(c *echo.Context) error {
 		return c.String(http.StatusOK, "Server is up and running!")
 	})
 
-	e.GET("/projects", func(c *echo.Context) error {
-		handlers := &handlers.ProjectHandler{DB: &config.Database{DB: db}}
-		return handlers.GetProjects(c)
-	})
-	e.GET("/projects/:id", func(c *echo.Context) error {
-		handlers := &handlers.ProjectHandler{DB: &config.Database{DB: db}}
-		return handlers.GetProjectByID(c)
-	})
+	// Initialize repositories
+	userRepo := repository.NewUserRepository(db)
+	roleRepo := repository.NewRoleRepository(db)
+	userRoleRepo := repository.NewUserRoleRepository(db)
+	projectMemberRepo := repository.NewProjectMemberRepository(db)
+	inviteRepo := repository.NewInviteRepository(db)
 
-	e.POST("/projects", func(c *echo.Context) error {
-		handlers := &handlers.ProjectHandler{DB: &config.Database{DB: db}}
-		return handlers.CreateProject(c)
-	})
+	// Initialize services
+	inviteService := service.NewInviteService(inviteRepo)
+	authService := service.NewAuthService(userRepo, userRoleRepo, roleRepo, inviteService)
+	userService := service.NewUserService(userRepo)
+	projectMemberService := service.NewProjectMemberService(projectMemberRepo)
 
-	e.PATCH("/projects/:id", func(c *echo.Context) error {
-		handlers := &handlers.ProjectHandler{DB: &config.Database{DB: db}}
-		return handlers.UpdateProject(c)
-	})
+	// Initialize handlers
+	authHandler := handlers.NewAuthHandler(authService, logger)
+	userHandler := handlers.NewUserHandler(userService, logger)
+	projectMemberHandler := handlers.NewProjectMemberHandler(projectMemberService, logger)
+	inviteHandler := handlers.NewInviteHandler(inviteService, logger)
 
-	e.DELETE("/projects/:id", func(c *echo.Context) error {
-		handlers := &handlers.ProjectHandler{DB: &config.Database{DB: db}}
-		return handlers.DeleteProject(c)
-	})
+	// Public routes (no authentication required)
+	e.POST("/auth/register", authHandler.Register)
+	e.POST("/auth/login", authHandler.Login)
+
+	// Protected routes (authentication required)
+	api := e.Group("", custommiddleware.AuthMiddleware())
+
+	// User routes - GET all users is group_head only; GET by ID enforces own-profile for members
+	api.GET("/users", userHandler.GetAllUsers, custommiddleware.RequireRole("group_head"))
+	api.GET("/users/:id", userHandler.GetUserByID)
+
+	// User routes - DELETE only for group heads
+	api.DELETE("/users/:id", userHandler.DeleteUser, custommiddleware.RequireRole("group_head"))
+
+	// Project member routes - PATCH (add user to project) only for group heads
+	api.POST("/projects/:project_id/members", projectMemberHandler.AddMember, custommiddleware.RequireRole("group_head"))
+	api.DELETE("/projects/:project_id/members/:user_id", projectMemberHandler.RemoveMember, custommiddleware.RequireRole("group_head"))
+	api.GET("/projects/:project_id/members", projectMemberHandler.GetMembers)
+
+	// Invite routes - only group heads can create invites
+	api.POST("/invites", inviteHandler.CreateInvite, custommiddleware.RequireRole("group_head"))
 
 	port := os.Getenv("PORT")
 	if port == "" {
