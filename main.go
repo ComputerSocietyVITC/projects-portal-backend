@@ -55,6 +55,26 @@ func main() {
 		return c.String(http.StatusOK, "Server is up and running!")
 	})
 
+	e.GET("/projects", func(c *echo.Context) error {
+		return
+	})
+
+	e.GET("/projects/:id", func(c *echo.Context) error {
+		return c.String(http.StatusOK, "Project details endpoint")
+	})
+
+	e.POST("/projects", func(c *echo.Context) error {
+		return c.String(http.StatusOK, "Create project endpoint")
+	})
+
+	e.PATCH("/projects/:id", func(c *echo.Context) error {
+		return c.String(http.StatusOK, "Update project endpoint")
+	})
+
+	e.DELETE("/projects/:id", func(c *echo.Context) error {
+		return c.String(http.StatusOK, "Delete project endpoint")
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
