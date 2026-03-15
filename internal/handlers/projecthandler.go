@@ -4,23 +4,17 @@ import (
 	"net/http"
 
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/config"
+	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/models"
 	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 )
-
-type Project struct {
-	ID          uint   `json:"id" gorm:"primaryKey"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Link        string `json:"link"`
-}
 
 type ProjectHandler struct {
 	DB *config.Database
 }
 
 func (h *ProjectHandler) GetProjects(c *echo.Context) error {
-	var projects []Project
+	var projects []models.Project
 	if err := h.DB.Find(&projects).Error; err != nil {
 		zap.L().Error("failed to fetch projects", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch projects"})
@@ -30,7 +24,7 @@ func (h *ProjectHandler) GetProjects(c *echo.Context) error {
 
 func (h *ProjectHandler) GetProjectByID(c *echo.Context) error {
 	id := c.Param("id")
-	var project Project
+	var project models.Project
 	if err := h.DB.First(&project, id).Error; err != nil {
 		zap.L().Error("project not found", zap.String("id", id), zap.Error(err))
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Project not found"})
@@ -39,7 +33,7 @@ func (h *ProjectHandler) GetProjectByID(c *echo.Context) error {
 }
 
 func (h *ProjectHandler) CreateProject(c *echo.Context) error {
-	var project Project
+	var project models.Project
 	if err := c.Bind(&project); err != nil {
 		zap.L().Error("failed to bind project data", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid project data"})
@@ -53,7 +47,7 @@ func (h *ProjectHandler) CreateProject(c *echo.Context) error {
 
 func (h *ProjectHandler) UpdateProject(c *echo.Context) error {
 	id := c.Param("id")
-	var project Project
+	var project models.Project
 	if err := h.DB.First(&project, id).Error; err != nil {
 		zap.L().Error("project not found", zap.String("id", id), zap.Error(err))
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Project not found"})
@@ -71,7 +65,7 @@ func (h *ProjectHandler) UpdateProject(c *echo.Context) error {
 
 func (h *ProjectHandler) DeleteProject(c *echo.Context) error {
 	id := c.Param("id")
-	var project Project
+	var project models.Project
 	if err := h.DB.First(&project, id).Error; err != nil {
 		zap.L().Error("project not found", zap.String("id", id), zap.Error(err))
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Project not found"})

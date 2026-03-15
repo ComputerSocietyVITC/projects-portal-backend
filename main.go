@@ -8,6 +8,7 @@ import (
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/config"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/handlers"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/logger"
+	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/models"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -36,7 +37,7 @@ func main() {
 		logger.Fatal("failed to get sql db: %v", zap.Error(err))
 	}
 
-	if err := db.AutoMigrate(&handlers.Project{}); err != nil {
+	if err := db.AutoMigrate(&models.Project{}); err != nil {
 		logger.Fatal("failed to auto-migrate database: %v", zap.Error(err))
 	}
 
