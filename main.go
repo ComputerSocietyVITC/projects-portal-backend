@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/config"
+	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/handlers"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/logger"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v5"
@@ -51,28 +52,29 @@ func main() {
 		},
 	}))
 
+	handlers := &handlers.ProjectHandler{DB: &config.Database{DB: db}}
+
 	e.GET("/", func(c *echo.Context) error {
 		return c.String(http.StatusOK, "Server is up and running!")
 	})
 
 	e.GET("/projects", func(c *echo.Context) error {
-		return
+		return handlers.GetProjects(c)
 	})
-
 	e.GET("/projects/:id", func(c *echo.Context) error {
-		return c.String(http.StatusOK, "Project details endpoint")
+		return handlers.GetProjectByID(c)
 	})
 
 	e.POST("/projects", func(c *echo.Context) error {
-		return c.String(http.StatusOK, "Create project endpoint")
+		return handlers.CreateProject(c)
 	})
 
 	e.PATCH("/projects/:id", func(c *echo.Context) error {
-		return c.String(http.StatusOK, "Update project endpoint")
+		return handlers.UpdateProject(c)
 	})
 
 	e.DELETE("/projects/:id", func(c *echo.Context) error {
-		return c.String(http.StatusOK, "Delete project endpoint")
+		return handlers.DeleteProject(c)
 	})
 
 	port := os.Getenv("PORT")

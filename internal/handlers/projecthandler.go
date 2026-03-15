@@ -8,11 +8,18 @@ import (
 	"go.uber.org/zap"
 )
 
+type Project struct {
+	ID          uint   `json:"id" gorm:"primaryKey"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Link        string `json:"link"`
+}
+
 type ProjectHandler struct {
 	DB *config.Database
 }
 
-func (h *ProjectHandler) GetProjects(c echo.Context) error {
+func (h *ProjectHandler) GetProjects(c *echo.Context) error {
 	var projects []Project
 	if err := h.DB.Find(&projects).Error; err != nil {
 		zap.L().Error("failed to fetch projects", zap.Error(err))
@@ -21,7 +28,7 @@ func (h *ProjectHandler) GetProjects(c echo.Context) error {
 	return c.JSON(http.StatusOK, projects)
 }
 
-func (h *ProjectHandler) GetProjectByID(c echo.Context) error {
+func (h *ProjectHandler) GetProjectByID(c *echo.Context) error {
 	id := c.Param("id")
 	var project Project
 	if err := h.DB.First(&project, id).Error; err != nil {
@@ -31,7 +38,7 @@ func (h *ProjectHandler) GetProjectByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, project)
 }
 
-func (h *ProjectHandler) CreateProject(c echo.Context) error {
+func (h *ProjectHandler) CreateProject(c *echo.Context) error {
 	var project Project
 	if err := c.Bind(&project); err != nil {
 		zap.L().Error("failed to bind project data", zap.Error(err))
@@ -44,7 +51,7 @@ func (h *ProjectHandler) CreateProject(c echo.Context) error {
 	return c.JSON(http.StatusCreated, project)
 }
 
-func (h *ProjectHandler) UpdateProject(c echo.Context) error {
+func (h *ProjectHandler) UpdateProject(c *echo.Context) error {
 	id := c.Param("id")
 	var project Project
 	if err := h.DB.First(&project, id).Error; err != nil {
@@ -62,7 +69,7 @@ func (h *ProjectHandler) UpdateProject(c echo.Context) error {
 	return c.JSON(http.StatusOK, project)
 }
 
-func (h *ProjectHandler) DeleteProject(c echo.Context) error {
+func (h *ProjectHandler) DeleteProject(c *echo.Context) error {
 	id := c.Param("id")
 	var project Project
 	if err := h.DB.First(&project, id).Error; err != nil {
