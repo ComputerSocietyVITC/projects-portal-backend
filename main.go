@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+
 	if err := godotenv.Load(); err != nil {
 		log.Printf("failed to load .env file: %v", err)
 	}
@@ -34,6 +35,11 @@ func main() {
 	if err != nil {
 		logger.Fatal("failed to get sql db: %v", zap.Error(err))
 	}
+
+	if err := db.AutoMigrate(&handlers.Project{}); err != nil {
+		logger.Fatal("failed to auto-migrate database: %v", zap.Error(err))
+	}
+
 	if err := sqlDB.Ping(); err != nil {
 		logger.Fatal("failed to ping database: %v", zap.Error(err))
 	}

@@ -53,6 +53,9 @@ CREATE TABLE projects (
     updated_at BIGINT NOT NULL
 );
 
+INSERT INTO projects (title, description, domain, status, repo_url, start_date, end_date, created_by, created_at, updated_at) VALUES
+('Project_Test', 'A test project for verification purposes.', 'Software Development', 'Active', 'https://github.com/ComputerSocietyVITC/project-test', '2023-01-01', '2023-12-31', 'user_id_1', 1672531200, 1672531200);
+
 CREATE TABLE project_members (
     project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
