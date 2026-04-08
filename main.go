@@ -63,6 +63,21 @@ func main() {
 		return c.String(http.StatusOK, "Server is up and running!")
 	})
 
+	e.GET("/users", func(c *echo.Context) error {
+		handlers := &handlers.UserHandler{DB: &config.Database{DB: db}}
+		return handlers.GetUsers(c)
+	})
+
+	e.GET("/users/:id", func(c *echo.Context) error {
+		handlers := &handlers.UserHandler{DB: &config.Database{DB: db}}
+		return handlers.GetUserByID(c)
+	})
+
+	e.POST("/users", func(c *echo.Context) error {
+		handlers := &handlers.UserHandler{DB: &config.Database{DB: db}}
+		return handlers.CreateUser(c)
+	})
+
 	e.GET("/projects", func(c *echo.Context) error {
 		handlers := &handlers.ProjectHandler{DB: &config.Database{DB: db}}
 		return handlers.GetProjects(c)
@@ -85,6 +100,16 @@ func main() {
 	e.DELETE("/projects/:id", func(c *echo.Context) error {
 		handlers := &handlers.ProjectHandler{DB: &config.Database{DB: db}}
 		return handlers.DeleteProject(c)
+	})
+
+	e.POST("/projects/:id/members", func(c *echo.Context) error {
+		handlers := &handlers.ProjectMemberHandler{DB: &config.Database{DB: db}}
+		return handlers.AddMember(c)
+	})
+
+	e.DELETE("/projects/:id/members/:member_id", func(c *echo.Context) error {
+		handlers := &handlers.ProjectMemberHandler{DB: &config.Database{DB: db}}
+		return handlers.RemoveMember(c)
 	})
 
 	port := os.Getenv("PORT")
