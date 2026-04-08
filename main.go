@@ -76,21 +76,18 @@ func main() {
 	roleRepo := repository.NewRoleRepository(db)
 	userRoleRepo := repository.NewUserRoleRepository(db)
 	projectMemberRepo := repository.NewProjectMemberRepository(db)
-	projectsRepo := repository.NewProjectRepository(db)
 	inviteRepo := repository.NewInviteRepository(db)
 
 	// Initialize services
 	inviteService := service.NewInviteService(inviteRepo)
 	authService := service.NewAuthService(userRepo, userRoleRepo, roleRepo, inviteService)
 	userService := service.NewUserService(userRepo)
-	projectService := service.NewProjectService(projectsRepo)
 	projectMemberService := service.NewProjectMemberService(projectMemberRepo)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService, logger)
 	userHandler := handlers.NewUserHandler(userService, logger)
 	projectMemberHandler := handlers.NewProjectMemberHandler(projectMemberService, logger)
-	projectsHandler := handlers.NewProjectHandler(projectService, logger)
 	inviteHandler := handlers.NewInviteHandler(inviteService, logger)
 
 	// Public routes (no authentication required)
@@ -106,13 +103,6 @@ func main() {
 
 	// User routes - DELETE only for group heads
 	api.DELETE("/users/:id", userHandler.DeleteUser, custommiddleware.RequireRole("group_head"))
-
-	// Project routes - GET all projects is open to all authenticated users; other operations are group_head only
-	api.GET("/projects", projectsHandler.GetAllProjects)
-	api.GET("/projects/:id", projectsHandler.GetProjectByID)
-	api.POST("/projects", projectsHandler.CreateProject, custommiddleware.RequireRole("group_head"))
-	api.PUT("/projects/:id", projectsHandler.UpdateProject, custommiddleware.RequireRole("group_head"))
-	api.DELETE("/projects/:id", projectsHandler.DeleteProject, custommiddleware.RequireRole("group_head"))
 
 	// Project member routes - PATCH (add user to project) only for group heads
 	api.POST("/projects/:project_id/members", projectMemberHandler.AddMember, custommiddleware.RequireRole("group_head"))
