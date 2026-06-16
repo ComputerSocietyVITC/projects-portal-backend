@@ -25,3 +25,7 @@ func ConnectDatabase() (*gorm.DB, error) {
 
 	return db, nil
 }
+
+type Database struct {
+	*gorm.DB
+}
