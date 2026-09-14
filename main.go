@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/config"
+	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/handlers"
 	"github.com/ComputerSocietyVITC/projects-portal-backend/internal/logger"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v5"
@@ -37,6 +39,13 @@ func main() {
 		logger.Fatal("failed to ping database: %v", zap.Error(err))
 	}
 
+	redisDB := config.ConnectRedis()
+
+	_, err = redisDB.Ping(context.Background()).Result()
+	if err != nil {
+		logger.Fatal("failed to connect to redis store: %v", zap.Error(err))
+	}
+
 	e := echo.New()
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
@@ -54,6 +63,8 @@ func main() {
 	e.GET("/", func(c *echo.Context) error {
 		return c.String(http.StatusOK, "Server is up and running!")
 	})
+
+	handlers.InitRoutes(e, db, redisDB, logger)
 
 	port := os.Getenv("PORT")
 	if port == "" {
